@@ -1,5 +1,21 @@
 ## ⚡ 풍력 발전량 예측 ML 모델 구현
 
+### 📝 프로젝트 소개
+
+**목표**: 주어진 시간별 기후 데이터를 기반으로 풍력 발전기의 시간당 발전량(`Generation_Amount`)을 예측하기
+
+---
+
+### 팀 구성
+
+|ML Model|Preprocessing|
+|:---:|:---:|
+| <img src="https://github.com/Ea3124.png" width="120"> | <img src="https://github.com/mangsgi.png" width="120"> |
+|[@이승재](https://github.com/Ea3124)|[@김명석](https://github.com/mangsgi)|
+|leesj6717@gmail.com| ms010901@gmail.com |
+
+---
+
 ### 📝 프로젝트 개요
 
 * **목표**: 시간별 기후 데이터를 기반으로 풍력 발전기의 시간당 발전량(`Generation_Amount`)을 예측합니다.
@@ -15,15 +31,6 @@
     - ECMWF_Climate_Data_Testing_private.csv (2020-02-01 ~ 2020-02-29)
 
 ---
-
-### 팀 구성
-
-|ML Model|Preprocessing|
-|:---:|:---:|
-| <img src="https://github.com/Ea3124.png" width="120"> | <img src="https://github.com/mangsgi.png" width="120"> |
-|[@이승재](https://github.com/Ea3124)|[@김명석](https://github.com/mangsgi)|
-|leesj6717@gmail.com| ms010901@gmail.com |
-
 
 ### 파일 구조
 
@@ -41,6 +48,8 @@
 ├── submission_public.csv           # 예측결과(public)
 └── xgb_final_model.pkl             # optuna로 최적화된 xgb model
 ```
+
+---
 
 ### 🛠️ 데이터 전처리 과정
 
