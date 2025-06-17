@@ -51,6 +51,20 @@
 
 ---
 
+### Quick Start
+
+```bash
+# python package download 
+pip install requirements.txt
+
+# run
+python3 main.py
+
+```
+
+---
+
+
 ### 🛠️ 데이터 전처리 과정
 
 #### 1. **발전기 데이터 처리**
