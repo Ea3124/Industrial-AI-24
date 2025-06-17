@@ -8,7 +8,7 @@
 
 ### 팀 구성
 
-|ML Model|Preprocessing|
+|ML Model & Feature Engineering |ML Model & Preprocessing|
 |:---:|:---:|
 | <img src="https://github.com/Ea3124.png" width="120"> | <img src="https://github.com/mangsgi.png" width="120"> |
 |[@이승재](https://github.com/Ea3124)|[@김명석](https://github.com/mangsgi)|
