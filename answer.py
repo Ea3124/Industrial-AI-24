@@ -5,10 +5,10 @@ import matplotlib.pyplot as plt
 import matplotlib
 
 # 1. 파일 불러오기
-gt_pub = pd.read_csv('./answer/public_answer.csv', encoding='utf-8-sig')      # 실제 정답
-pred_pub = pd.read_csv('./submission_public.csv', encoding='utf-8-sig')  # 예측 결과
-gt_pri = pd.read_csv('./answer/private_answer.csv', encoding='utf-8-sig')      # 실제 정답
-pred_pri = pd.read_csv('./submission_private.csv', encoding='utf-8-sig')  # 예측 결과
+gt_pub = pd.read_csv('./answer/public_answer.csv', encoding='utf-8-sig')    # 실제 정답
+pred_pub = pd.read_csv('./submission_public_dl.csv', encoding='utf-8-sig')     # 예측 결과
+gt_pri = pd.read_csv('./answer/private_answer.csv', encoding='utf-8-sig')   # 실제 정답
+pred_pri = pd.read_csv('./submission_private_dl.csv', encoding='utf-8-sig')    # 예측 결과
 
 gt_pub['시간'] = pd.to_datetime(gt_pub['시간'])
 pred_pub['시간'] = pd.to_datetime(pred_pub['시간'])

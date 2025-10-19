@@ -14,6 +14,9 @@ import numpy as np
 from datetime import datetime
 
 def prepare_merged_data(df_hourly, climate_processed, use_predicted_sensor=False):
+    """
+    발전기 데이터와 기후 데이터를 병합하는 함수
+    """
     df = df_hourly.reset_index().merge(
         climate_processed,
         how='inner',
@@ -23,17 +26,34 @@ def prepare_merged_data(df_hourly, climate_processed, use_predicted_sensor=False
 
     # 센서 관련 열 제거
     eng_col_remove = [
-        'Date', 'time', 'lon', 'lat', 'Generator_Running_State',
+        'Date', 
+        'time', 
+        'lon', 
+        'lat', 
+        'Generator_Running_State',
         'Generation_Amount',
         'Sensor_Wind_Speed',
-        'Generator_Current_A', 'Generator_Current_B', 'Generator_Current_C',
-        'Gear_Oil_Temperature', 'Generator_Output', 'Generator_Speed',
-        'Internal_Temperature', 'Coolant_Temperature', 'Hydraulic_Oil_Temperature',
-        'Pitch_Pressure', 'Rotor_Speed',
-        'Winding_Temperature_A', 'Winding_Temperature_B', 'Winding_Temperature_C',
-        'Transformer_Temperature_BUS', 'Transformer_Temperature_A',
-        'Transformer_Temperature_B', 'Transformer_Temperature_C',
-        'Generator_Voltage_A', 'Generator_Voltage_B', 'Generator_Voltage_C'
+        'Generator_Current_A', 
+        'Generator_Current_B', 
+        'Generator_Current_C',
+        'Gear_Oil_Temperature', 
+        'Generator_Output', 
+        'Generator_Speed',
+        'Internal_Temperature', 
+        'Coolant_Temperature', 
+        'Hydraulic_Oil_Temperature',
+        'Pitch_Pressure', 
+        'Rotor_Speed',
+        'Winding_Temperature_A', 
+        'Winding_Temperature_B', 
+        'Winding_Temperature_C',
+        'Transformer_Temperature_BUS', 
+        'Transformer_Temperature_A', 
+        'Transformer_Temperature_B', 
+        'Transformer_Temperature_C',
+        'Generator_Voltage_A', 
+        'Generator_Voltage_B', 
+        'Generator_Voltage_C'
     ]
 
     y = df['Generation_Amount']
@@ -47,6 +67,9 @@ def prepare_merged_data(df_hourly, climate_processed, use_predicted_sensor=False
     return X, y
 
 def train_and_evaluate_model(model, X, y, name='Model'):
+    """
+    모델 학습 및 성능 평가 함수
+    """
     X_train, X_val, y_train, y_val = train_test_split(
         X, y, test_size=0.2, shuffle=False  # 시계열 유지
     )
@@ -57,10 +80,12 @@ def train_and_evaluate_model(model, X, y, name='Model'):
     return model, mae
 
 def train_and_evaluate(X, y, name='Model'):
+    """
+    모델 학습 및 성능 평가 함수 (모델 고정)
+    """
     X_train, X_val, y_train, y_val = train_test_split(
         X, y, test_size=0.2, shuffle=False  # 시계열은 시간 순서 유지
     )
-
 
     model = RandomForestRegressor(n_estimators=100, random_state=42)
     model.fit(X_train, y_train)
@@ -71,6 +96,9 @@ def train_and_evaluate(X, y, name='Model'):
     return model, mae
 
 def plot_feature_importance(model, feature_names, top_n=19):
+    """
+    특성 중요도 그래프 함수
+    """
     importances = model.feature_importances_
     sorted_idx = importances.argsort()[::-1]
     top_features = sorted_idx[:top_n]
@@ -84,6 +112,9 @@ def plot_feature_importance(model, feature_names, top_n=19):
     plt.show()
 
 def get_top_features(model, feature_names, top_n=10):
+    """
+    특성 중요도 상위 top_n개 컬럼 반환 함수
+    """
     importances = model.feature_importances_
     sorted_idx = importances.argsort()[::-1]
     return [feature_names[i] for i in sorted_idx[:top_n]]
@@ -120,6 +151,9 @@ def get_top_features(model, feature_names, top_n=10):
 # X_train, X_val, y_train_log, y_val_log = train_test_split(X_a, y_log, test_size=0.2, shuffle=False)
 
 def objective_rf(trial):
+    """
+    Random Forest 모델 학습 함수
+    """
     model = RandomForestRegressor(
         n_estimators=trial.suggest_int('n_estimators', 50, 300),
         max_depth=trial.suggest_int('max_depth', 3, 20),
@@ -133,6 +167,9 @@ def objective_rf(trial):
     return mean_absolute_error(np.expm1(y_val_log), y_pred)
 
 def objective_xgb(trial):
+    """
+    XGBoost 모델 학습 함수
+    """
     model = XGBRegressor(
         n_estimators=trial.suggest_int('n_estimators', 50, 300),
         max_depth=trial.suggest_int('max_depth', 3, 15),
@@ -147,6 +184,9 @@ def objective_xgb(trial):
     return mean_absolute_error(np.expm1(y_val_log), y_pred)
 
 def objective_lgbm(trial):
+    """
+    LightGBM 모델 학습 함수
+    """
     model = LGBMRegressor(
         n_estimators=trial.suggest_int('n_estimators', 50, 300),
         max_depth=trial.suggest_int('max_depth', 3, 15),
@@ -161,6 +201,9 @@ def objective_lgbm(trial):
     return mean_absolute_error(np.expm1(y_val_log), y_pred)
 
 def objective_et(trial):
+    """
+    ExtraTrees 모델 학습 함수
+    """
     model = ExtraTreesRegressor(
         n_estimators=trial.suggest_int('n_estimators', 50, 300),
         max_depth=trial.suggest_int('max_depth', 3, 20),

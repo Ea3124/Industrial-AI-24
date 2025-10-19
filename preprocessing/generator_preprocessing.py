@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
-"""data_preprocessing.ipynb
+""" data_preprocessing.ipynb
 데이터 삭제하는 방식의 전처리 진행
-
 """
 
 import pandas as pd
@@ -65,7 +64,7 @@ def generator_preprocessing(generator_all, plot=False):
     df_hourly = pd.concat([df_numeric_resampled, df_strings], axis=1)
 
     if plot:
-        print("1시간단위 바람 리샘플링")
+        print("1시간 단위 풍속 리샘플링")
         col = 'Sensor_Wind_Speed'
 
         plt.figure(figsize=(12, 4))

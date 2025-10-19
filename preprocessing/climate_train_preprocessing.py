@@ -9,12 +9,18 @@ import xarray as xr
 
 # 상수 정의
 R = 287.05  # 건조 공기의 기체 상수 (J/(kg·K))
-g = 9.80665  # 중력 가속도 (m/s²)
+g = 9.80665 # 중력 가속도 (m/s²)
 
 def calculate_altitude(temperature, sea_level_pressure, surface_pressure):
+    """
+    고도 계산 함수
+    """
     return ((R * temperature) / g) * np.log(sea_level_pressure / surface_pressure)
 
 def calculate_z0(V_10, V_100, eps=1e-5):
+    """
+    표면 조도 길이 계산 함수 
+    """
     ratio = V_100 / (V_10 + eps)  # divide-by-zero 보호
     denominator = 1 - ratio
     denominator = denominator if abs(denominator) > eps else eps  # 또 한 번 보호
@@ -24,18 +30,30 @@ def calculate_z0(V_10, V_100, eps=1e-5):
     return z0
 
 def calculate_wind_speed(V_10, z0, target_height):
+    """
+    풍속 계산 함수
+    """
     return V_10 * (np.log(target_height / z0) / np.log(10 / z0))
 
 def calculate_wind_components(U_10, V_10, z0, target_height):
+    """
+    풍속 성분 계산 함수
+    """
     factor = np.log(target_height / z0) / np.log(10 / z0)
     return U_10 * factor, V_10 * factor
 
 def calculate_wind_direction(U, V):
+    """
+    풍향 계산 함수
+    """
     rad = np.arctan2(U, V)
     deg = np.degrees(rad)
     return (deg + 360) % 360
 
 def convert_precip_to_hourly(df, cum_col='Total precipitation'):
+    """
+    강수량 누적 시간을 시간당 강수량으로 변환하는 함수
+    """
     df = df.sort_values(['lon', 'lat', 'time']).copy()
     df['prev_precip'] = df.groupby(['lon', 'lat'])[cum_col].shift(1).fillna(0)
     df['diff'] = df[cum_col] - df['prev_precip']
@@ -43,6 +61,9 @@ def convert_precip_to_hourly(df, cum_col='Total precipitation'):
     return df.drop(columns=['prev_precip', 'diff'])
 
 def align_last_25_times(df, block_size: int = 200):
+    """
+    마지막 block_size(25행)의 time을 175번째 행의 time으로 맞추는 함수
+    """
     df = df.copy()
     n_rows = len(df)
     tail_len = 25
@@ -56,6 +77,9 @@ def align_last_25_times(df, block_size: int = 200):
     return df
 
 def interpolate_point(ds: xr.Dataset, lon_pt: float, lat_pt: float, method: str = 'linear') -> pd.DataFrame:
+    """
+    특정 지점에서 보간하는 함수
+    """
     ds_i = ds.interp(lon=lon_pt, lat=lat_pt, method=method)
     df_i = ds_i.to_dataframe().reset_index()
     df_i['lon_pt'] = lon_pt
@@ -86,6 +110,7 @@ def process_climate_data(climate_train: pd.DataFrame,
     df['time'] = pd.to_datetime(df['time'])
     df = align_last_25_times(df)
     
+    # 1) 데이터프레임을 그룹화하고 평균값을 계산
     df_agg = (
         df.groupby(["time", "lon", "lat", "parameterName"])
           .mean(numeric_only=True)
@@ -102,13 +127,15 @@ def process_climate_data(climate_train: pd.DataFrame,
 
     df_pivot = df_resampled.pivot(index=["time", "lon", "lat"], columns="parameterName", values="value").reset_index()
 
+    # 2) 강수량 누적 시간 수정
     if 'Total precipitation' in df_pivot.columns:
         df_pivot = convert_precip_to_hourly(df_pivot, 'Total precipitation')
 
+    # 3) 강수량 컬럼 삭제
     if drop_precip and 'Total precipitation' in df_pivot.columns:
         df_pivot = df_pivot.drop(columns=['Total precipitation'])
 
-    # Xarray 변환 & 보간
+    # 4) Xarray 변환 & 보간
     ds = df_pivot.set_index(['time', 'lon', 'lat']).to_xarray()
     interp_df = interpolate_point(ds, lon_pt=interp_point[0], lat_pt=interp_point[1], method='linear')
     interp_df = interp_df.drop(columns=['lon_pt', 'lat_pt'])
@@ -116,23 +143,24 @@ def process_climate_data(climate_train: pd.DataFrame,
     # 계산 파트
     df = interp_df.copy()
 
-    df['Air Density'] = df['Surface pressure'] / (R * df['2 metre temperature'])
-    df['Altitude'] = calculate_altitude(df['2 metre temperature'], df['Mean sea level pressure'], df['Surface pressure'])
-    df['10m wind speed'] = np.sqrt(df['10 metre U wind component']**2 + df['10 metre V wind component']**2)
-    df['100m wind speed'] = np.sqrt(df['100 metre U wind component']**2 + df['100 metre V wind component']**2)
+    # 5) 고도/풍속/풍향 계산
+    df['Air Density'] = df['Surface pressure'] / (R * df['2 metre temperature']) # 공기 밀도 계산
+    df['Altitude'] = calculate_altitude(df['2 metre temperature'], df['Mean sea level pressure'], df['Surface pressure']) # 고도 계산
+    df['10m wind speed'] = np.sqrt(df['10 metre U wind component']**2 + df['10 metre V wind component']**2) # 10m 풍속 계산
+    df['100m wind speed'] = np.sqrt(df['100 metre U wind component']**2 + df['100 metre V wind component']**2) # 100m 풍속 계산
 
-    df['surface zodo len'] = df.apply(lambda row: calculate_z0(row['10m wind speed'], row['100m wind speed']), axis=1)
-    df['Altitude Wind Speed'] = df.apply(lambda row: calculate_wind_speed(row['10m wind speed'], row['surface zodo len'], row['Altitude']), axis=1)
+    df['surface zodo len'] = df.apply(lambda row: calculate_z0(row['10m wind speed'], row['100m wind speed']), axis=1) # 표면 조도 길이 계산
+    df['Altitude Wind Speed'] = df.apply(lambda row: calculate_wind_speed(row['10m wind speed'], row['surface zodo len'], row['Altitude']), axis=1) # 특정 고도 풍속 계산
 
-    df['U component at Altitude'], df['V component at Altitude'] = zip(*df.apply(
+    df['U component at Altitude'], df['V component at Altitude'] = zip(*df.apply( # 특정 고도 풍속의 U, V 성분 계산
         lambda row: calculate_wind_components(row['10 metre U wind component'], row['10 metre V wind component'],
                                               row['surface zodo len'], row['Altitude']), axis=1))
 
-    df['Altitude Wind Direction'] = df.apply(lambda row: calculate_wind_direction(row['U component at Altitude'], row['V component at Altitude']), axis=1)
-    df['Altitude Wind Direction_sin'] = np.sin(np.radians(df['Altitude Wind Direction']))
-    df['Altitude Wind Direction_cos'] = np.cos(np.radians(df['Altitude Wind Direction']))
+    df['Altitude Wind Direction'] = df.apply(lambda row: calculate_wind_direction(row['U component at Altitude'], row['V component at Altitude']), axis=1) # 특정 고도 풍향 계산
+    df['Altitude Wind Direction_sin'] = np.sin(np.radians(df['Altitude Wind Direction'])) # 특정 고도 풍향 sin 계산
+    df['Altitude Wind Direction_cos'] = np.cos(np.radians(df['Altitude Wind Direction'])) # 특정 고도 풍향 cos 계산
 
-    df['10m wind direction'] = df.apply(lambda row: calculate_wind_direction(row['10 metre U wind component'], row['10 metre V wind component']), axis=1)
-    df['100m wind direction'] = df.apply(lambda row: calculate_wind_direction(row['100 metre U wind component'], row['100 metre V wind component']), axis=1)
+    df['10m wind direction'] = df.apply(lambda row: calculate_wind_direction(row['10 metre U wind component'], row['10 metre V wind component']), axis=1) # 10m 풍향 계산
+    df['100m wind direction'] = df.apply(lambda row: calculate_wind_direction(row['100 metre U wind component'], row['100 metre V wind component']), axis=1) # 100m 풍향 계산
 
     return df

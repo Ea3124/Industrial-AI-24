@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
-"""remove_outlier.py
+""" remove_outlier.py
 극단 처리 전처리 함수들
-
 """
 
 import pandas as pd

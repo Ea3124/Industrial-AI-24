@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
-"""data_preprocessing.ipynb
+""" data_preprocessing.ipynb
 데이터 삭제하는 방식의 전처리 진행
-
 """
 
 import pandas as pd
